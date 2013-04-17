@@ -41,6 +41,7 @@ while True: # main game loop
             pygame.quit()
             sys.exit()
         elif (event.type == KEYDOWN):
+            print "YEPPP"
             #Programmer laziness at its finest
             if event.key == K_ESCAPE:
                 pygame.quit()

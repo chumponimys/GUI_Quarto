@@ -155,22 +155,22 @@ def get_host_information():
     port = int(raw_input('What\'s the port of the host?'))
     return [host_ip, port]
 
-while True: # main game loop
-    MAINSURF.fill(WHITE) #wipe surface clean for redraw
-    for event in pygame.event.get():
-        if(event.type == QUIT):
-            pygame.quit()
-            sys.exit()
-        elif(event.type == KEYDOWN):
-            key_map = pygame.key.get_pressed()
-            #key_down stuff here
-            pass
-        elif(event.type == MOUSEMOTION):
-            #use this for changing color of buttons
-            #check_mouse_pos()
-            pass
-        elif(event.type == MOUSEBUTTONDOWN):
-            #use this for dragging and dropping pieces (and button clicks)
-            #mouse_click()
-            pass
-    pygame.display.update()
+##while True: # main game loop
+##    MAINSURF.fill(WHITE) #wipe surface clean for redraw
+##    for event in pygame.event.get():
+##        if(event.type == QUIT):
+##            pygame.quit()
+##            sys.exit()
+##        elif(event.type == KEYDOWN):
+##            key_map = pygame.key.get_pressed()
+##            #key_down stuff here
+##            pass
+##        elif(event.type == MOUSEMOTION):
+##            #use this for changing color of buttons
+##            #check_mouse_pos()
+##            pass
+##        elif(event.type == MOUSEBUTTONDOWN):
+##            #use this for dragging and dropping pieces (and button clicks)
+##            #mouse_click()
+##            pass
+##    pygame.display.update()

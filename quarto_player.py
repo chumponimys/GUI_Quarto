@@ -44,6 +44,7 @@ class GamePlayer():
             self.HOST_PORT = start_host_server(self)
             
     def get_move(self, game_state):
+        #Needs to be redone for GUI
         if self.type == GamePlayer.HUMAN:
             return get_human_move(game_state)
         elif self.type == GamePlayer.NETWORK_HOST:
@@ -53,10 +54,8 @@ class GamePlayer():
         else:
             return get_computer_move(game_state, self.level)
 
-# For each player, this should set
-#   1) human, computer, network
-#   1a) if computer, how much time allowed and what level to play
 def get_players_info(player0, player1):
+    #Needs to be redone for GUI
     players = [player0, player1]
     data = get_players_information()
     for index in range(2):

@@ -1,9 +1,6 @@
 # quarto game - game state classes
 # Sean Straw & Ari Cohen
-
-import random  # used for creating random moves
 from quarto_interface import *  # maybe split Board into logical info and display info?
-
 
 class GameStatus():
     PLAYING = 1
@@ -15,7 +12,6 @@ class GameStatus():
 class MoveStatus():
     LEGAL_MOVE = 1
     ILLEGAL_MOVE = 2
-
 
 # A move consists of two parts
 # 1) placing the current piece into an empty square on the board
