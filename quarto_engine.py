@@ -35,7 +35,7 @@ def quarto(player_1, player_2):
     return [game_state, game_status, final_move, player_1, player_2]
 
 while True: # main game loop
-    MAIN_SURF.fill(WHITE)
+  o  MAIN_SURF.fill(WHITE)
     for event in pygame.event.get():
         if(event.type == QUIT):
             pygame.quit()
