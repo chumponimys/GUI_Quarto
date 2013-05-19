@@ -15,7 +15,7 @@ class Button():
     SQUARE = 1
     CIRCLE = 2
 
-    def __init__(self, position, text, shape, check=False, color=BLACK,
+    def __init__(self, position, text, shape, surface, check=False, color=BLACK,
                  size=50, text_size=16):
         #Initialize main variables
         self.position = position
@@ -23,6 +23,7 @@ class Button():
         self.size = size
         self.checked = check
         self.shape = shape
+        self.surf = surface
 
         #Create text and text surface
         button_font = pygame.font.Font('freesansbold.ttf', text_size)
@@ -69,7 +70,7 @@ class Button():
         return self.surface
 
     def draw_surface(self):
-        MAIN_SURF.blit(self.surface, self.position)
+        self.surf.blit(self.surface, self.position)
 
     def get_if_checked(self):
         return self.checked
@@ -115,18 +116,19 @@ class CheckBox(Button):
 
 class RadioButton(Button):
 
-    def __init__(self, position, text, shape, check=False, color=BLACK,
+    def __init__(self, position, text, shape, surface, check=False, color=BLACK,
                  size=50, text_size=16):
         #for individual radio buttons so they will inherit
-        Button.__init__(self, position, text, shape, check, color, size, text_size)
+        Button.__init__(self, position, text, shape, surface, check, color, size, text_size)
 
     def draw_button(self, surface, color, rect, thickness=0):
         pygame.draw.ellipse(surface, color, rect, thickness)
 
 class RadioButtonGroup():
 
-    def __init__(self, (x, y), button_number, check=0, color=BLACK,
+    def __init__(self, (x, y), button_number, surface, check=False, color=BLACK,
                  size=50, text_size=16, names=[]):
+        self.surf = surface
         self.total_buttons = button_number
         self.buttons = []
         for button in range(self.total_buttons):
@@ -134,8 +136,7 @@ class RadioButtonGroup():
                 name = ""
             else:
                 name = names[button]
-            self.buttons.append(RadioButton((x, y+((y + 10) * button)), name, Button.CIRCLE,
-                                                     check=False, color=BLACK,
+            self.buttons.append(RadioButton((x, y+((y + 10) * button)), name, Button.CIRCLE, self.surf,
                                                      size=50, text_size=16))
                                               
         self.buttons[check].set_if_checked(True)
@@ -158,11 +159,16 @@ class RadioButtonGroup():
             self.set_if_checked(True)
         self.checked = not self.checked
         self.update_surface()
-        MAIN_SURF.blit(self.surface, self.position)
+        self.surf.blit(self.surface, self.position)
 
     def draw_surface(self):
         for button in self.buttons:
             button.draw_surface()
+
+    def get_selected(self):
+        for button in range(self.total_buttons):
+            if(self.buttons[button].get_if_checked()):
+                return button
     
 
 ###Create Checkboxes

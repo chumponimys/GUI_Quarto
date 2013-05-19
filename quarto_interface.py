@@ -1,5 +1,7 @@
 import pygame, sys
 from pygame.locals import *
+from buttons import *
+from quarto_state import *
 
 pygame.init()
 MAIN_SURF = pygame.display.set_mode((800, 600))
@@ -31,11 +33,14 @@ class Board():
         self.surface = pygame.Surface((width, width))
         self.board_rect = pygame.Rect(position[0], position[1], width, width)
 
-    def set_square(self, square_number, piece):
-        pass
+    def set_square(self, row, col, piece):
+        self.squares[(self.board_width * row) + col].click_action(piece)
 
-    def get_square(self, square_number):
-        pass
+    def get_square_coords(self, row, col):
+        (x, y) = self.squares[(self.board_width * row) + col].get_location()
+        x += self.position[0]
+        y += self.position[1]
+        return (x,y)
 
     def update_board_surface(self):
         self.surface.fill(BLACK)
@@ -57,11 +62,11 @@ class Board():
             row = mouse_y / (self.square_width + 5)
             bad_drag = self.squares[(self.board_width * row) + col].click_action(dragging_piece)
             if(bad_drag):
-                return False
+                return [False, [col, row]]
             else:
-                return True
+                return [True, [col, row]]
         else:
-            return False
+            return [False, 0]
     
 class Square():
 
@@ -102,8 +107,6 @@ class Square():
 class Piece_Holder():
 
     NO_CLICK = 7
-    DONE_MOVING = -2
-    RETURN_STEPS = 30
     PIECE_WIDTH = 69
 
     def __init__(self, position, board):
@@ -114,9 +117,6 @@ class Piece_Holder():
         for square in range(board.total_squares):
             self.squares.append(Holder_Square(square, self))
         self.holder_rect = pygame.Rect(position[0], position[1], (Piece_Holder.PIECE_WIDTH + 5) * 2, ((Piece_Holder.PIECE_WIDTH + 5) * (board.total_squares / 2)) + 5)
-        self.moving_piece = Piece_Holder.DONE_MOVING
-        self.moving_piece_loc = (0, 0)
-
 
     def update_holder_surface(self):
         self.surface.fill(WHITE)
@@ -147,27 +147,14 @@ class Piece_Holder():
         else:
             return (Piece_Holder.NO_CLICK, 0)
 
-    def put_piece_back(self, piece, location):
-        self.moving_piece = piece
-        self.moving_piece_loc = location
-        destination_x, destination_y = self.squares[piece].position
-        final_destination = (destination_x + self.position[0], destination_y + self.position[1])
-        delta_x = location[0] - final_destination[0]
-        delta_y = location[1] - final_destination[1]
-        x_vals = []
-        y_vals = []
-        for step in range(Piece_Holder.RETURN_STEPS):
-            x_vals.append(delta_x / Piece_Holder.RETURN_STEPS)
-            y_vals.append(delta_y / Piece_Holder.RETURN_STEPS)
-        for x in range(delta_x % Piece_Holder.RETURN_STEPS):
-            x_vals[x] += 1
-        for y in range(delta_y % Piece_Holder.RETURN_STEPS):
-            y_vals[y] += 1
-        return (x_vals, y_vals)
+    def piece_returned(self, piece_num):
+        self.squares[piece_num].returned()
 
-    def piece_returned(self):
-        self.squares[self.moving_piece].returned()
-        self.moving_piece = Piece_Holder.DONE_MOVING
+    def get_square(self, square):
+        return self.squares[square]
+
+    def get_square_pos(self, square_num):
+        return self.squares[square_num].get_pos()
 
 class Holder_Square():
 
@@ -209,6 +196,9 @@ class Holder_Square():
     def returned(self):
         self.piece = self.primary_piece
 
+    def get_pos(self):
+        return self.position
+
 class Next_Piece_Box():
 
     def __init__(self, position):
@@ -220,7 +210,7 @@ class Next_Piece_Box():
         self.piece_num = 15
 
     def get_current_piece(self):
-        return self.piece
+        return (self.piece, self.piece_num)
 
     def update_box_surface(self):
         self.surface.fill(WHITE)
@@ -244,8 +234,13 @@ class Next_Piece_Box():
                 return place_holder
             else:
                 self.on_mouse_drop(piece_num)
+                return (0, 0)
         else:
             return (Piece_Holder.NO_CLICK, 0)
+
+    def clear_box(self):
+        self.piece = Holder_Square.EMPTY
+        self.piece_num = Holder_Square.EMPTY
 
     def on_mouse_drop(self, piece_num):
         self.piece_num = piece_num
@@ -253,80 +248,177 @@ class Next_Piece_Box():
         self.piece = pygame.transform.scale(raw_piece, (Piece_Holder.PIECE_WIDTH, Piece_Holder.PIECE_WIDTH))
         self.surface.blit(self.piece, (1, 1))
             
+class MainInterface():
 
-my_board = Board((350, 88), 4, 100)
-my_piece_holder = Piece_Holder((10, 0), my_board)
-my_next_piece_box = Next_Piece_Box((200, 250))
-dragging_piece = False
-piece_moving = False
-piece_num = -1
+    def __init__(self):
+        self.board = Board((350, 88), 4, 100)
+        self.piece_holder = Piece_Holder((10, 0), self.board)
+        self.next_piece_box = Next_Piece_Box((200, 250))
+        self.dragging_piece = False
+        self.piece_moving = False
+        self.piece_num = -1
 
-def mouse_button_down():
-    global piece_moving, dragging_piece, piece_clicked, piece_num
-    
-    if(not piece_moving):
-        if(my_next_piece_box.get_current_piece() == Holder_Square.EMPTY):
-            piece_clicked, piece_num = my_piece_holder.check_for_click()
-            if(piece_clicked != Piece_Holder.NO_CLICK):
-                dragging_piece = True
-        else:
-            piece_clicked, piece_num = my_next_piece_box.check_for_click(piece_num)
-            if(piece_clicked != Piece_Holder.NO_CLICK):
-                dragging_piece = True
+    def get_board(self):
+        return self.board
 
-def do_event_fetch():
-    while True: # main game loop
+    def get_piece_holder(self):
+        return self.piece_holder
+
+    def get_next_piece_box(self):
+        return self.next_piece_box
+
+    def do_event_fetch(self):
         MAIN_SURF.fill(WHITE)
-        my_board.draw_board()
-        my_piece_holder.draw_holder()
-        my_next_piece_box.draw_box()
+        self.board.draw_board()
+        self.piece_holder.draw_holder()
+        self.next_piece_box.draw_box()
         
         for event in pygame.event.get():
             if(event.type == QUIT):
-                return "Quit"
-                #pygame.quit()
-                #sys.exit()
+                pygame.quit()
+                sys.exit()
             elif(event.type == KEYDOWN):
-                #key_map = pygame.key.get_pressed()
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                key_map = pygame.key.get_pressed()
                 return key_map
             elif(event.type == MOUSEBUTTONDOWN):
-                #mouse_button_down()
                 return MOUSEBUTTONDOWN
             elif(event.type == MOUSEBUTTONUP):
                 return MOUSEBUTTONUP
 
-while True: # main game loop
-    MAIN_SURF.fill(WHITE)
-    my_board.draw_board()
-    my_piece_holder.draw_holder()
-    my_next_piece_box.draw_box()
-    
-    for event in pygame.event.get():
-        if(event.type == QUIT):
-            pygame.quit()
-            sys.exit()
-        elif(event.type == KEYDOWN):
-            key_map = pygame.key.get_pressed()
-        elif(event.type == MOUSEBUTTONDOWN):
-            mouse_button_down()
-        elif(event.type == MOUSEBUTTONUP):
-            if(dragging_piece):
-                dragging_piece = False
-                piece_dropped_on_board = my_board.check_for_mouse(piece_num)
-                if(not piece_dropped_on_board):
-                    piece_moving = True
-                    piece_path = my_piece_holder.put_piece_back(piece_num, pygame.mouse.get_pos())
-                    piece_location = pygame.mouse.get_pos()
 
-    if(dragging_piece):
-        MAIN_SURF.blit(piece_clicked, pygame.mouse.get_pos())
-    elif(piece_moving):
-        if(len(piece_path[0]) == 0):
-            piece_moving = False
-            my_piece_holder.piece_returned()
-        else:
-            current_change = (piece_path[0].pop(0), piece_path[1].pop(0))
-            new_location = (piece_location[0] - current_change[0], piece_location[1] - current_change[1])
-            piece_location = new_location
-            MAIN_SURF.blit(piece_clicked, piece_location)
+def get_players_information(interface_state):
+    player_radios = [RadioButtonGroup((200, 50), 3, MAIN_SURF,
+                                      names=["Human", "Computer", "Network"],
+                                      color=BLACK, text_size=32),
+                     RadioButtonGroup((400, 50), 3, MAIN_SURF,
+                                      names=["Human", "Computer", "Network"],
+                                      color=BLACK, text_size=32)]
+    button_font = pygame.font.Font('freesansbold.ttf', 52)
+    text_surface = button_font.render("Go!", True, BLACK, GREEN)
+    text_rect = text_surface.get_rect()
+    text_rect.topleft = (350, 250)
+    
+    while True:
+        events = interface_state.do_event_fetch()
+        MAIN_SURF.fill(WHITE)
+        player_radios[0].draw_surface()
+        player_radios[1].draw_surface()
+        MAIN_SURF.blit(text_surface, (350, 250))
+        pygame.display.update()
+        
+        if (events == MOUSEBUTTONDOWN):
+            for radio in player_radios:
+                radio.check_for_click()
+            if (text_rect.collidepoint(pygame.mouse.get_pos())):
+                break
+    vals = ["h", "c", "n"]
+    selected = []
+    for radio in player_radios:
+        selected.append(vals[radio.get_selected()])
+        selected.append(3) #This would be computer strength
+    return selected
+
+def display_game_state(game_state):
+    interface_state = game_state.get_interface()
+    interface_state.do_event_fetch()
     pygame.display.update()
+
+def make_move_and_display(game_state, move):
+    interface_state = game_state.interface_state
+    board = interface_state.get_board()
+    game_state.make_move(move)
+    new_piece = move.get_piece()
+    current_interface_piece = interface_state.get_next_piece_box().get_current_piece()
+    if (new_piece != current_interface_piece[1]):
+        #Check if interface has already made move (if it was a human move)
+        interface_state.get_next_piece_box().clear_box()
+        col = move.get_col_placement()
+        row = move.get_row_placement()
+        move_surface(current_interface_piece[0], (200, 250), board.get_square_coords(row, col), interface_state)
+        board.set_square(row, col, current_interface_piece[1])
+        
+        holder_square = interface_state.get_piece_holder().get_square(new_piece)
+        new_current_piece = holder_square.click_action()
+        location = holder_square.get_pos()
+        move_surface(new_current_piece, location, (200, 250), interface_state)
+        interface_state.get_next_piece_box().on_mouse_drop(new_piece)
+        
+    display_game_state(game_state)
+
+def get_human_move(game_state):
+    interface_state = game_state.get_interface()
+    while True: #Loop until user has dropped piece on a good board space
+        while True: #Waiting for user to pick up piece
+            events = interface_state.do_event_fetch()
+            pygame.display.update()
+            if (events == MOUSEBUTTONDOWN):
+                [piece_surf, piece_num] = interface_state.get_next_piece_box().check_for_click(0)
+                if (piece_surf != Piece_Holder.NO_CLICK):
+                    break
+        while True: #User is dragging piece
+            events = interface_state.do_event_fetch()
+            MAIN_SURF.blit(piece_surf, pygame.mouse.get_pos())
+            pygame.display.update()
+            if (events == MOUSEBUTTONUP):
+                #square is the variable needed for making an instance of GameMove
+                [piece_on_board, square] = interface_state.get_board().check_for_mouse(piece_num)
+                break
+
+        if (piece_on_board): #Piece was dropped on board in good square
+            break
+        else: #Bad move, animate return of the piece
+            move_surface(piece_surf, pygame.mouse.get_pos(), (200, 250), interface_state)
+            interface_state.get_next_piece_box().on_mouse_drop(piece_num)
+
+    while True: #Waiting for user to drag in the next piece to play
+        while True: #Waiting for user to pick up piece
+            events = interface_state.do_event_fetch()
+            pygame.display.update()
+            if (events == MOUSEBUTTONDOWN):
+                [piece_surf, piece_num] = interface_state.get_piece_holder().check_for_click()
+                if (piece_surf != Piece_Holder.NO_CLICK):
+                    break
+        while True: #User is dragging piece
+            events = interface_state.do_event_fetch()
+            MAIN_SURF.blit(piece_surf, pygame.mouse.get_pos())
+            pygame.display.update()
+            if (events == MOUSEBUTTONUP):
+                click_response = interface_state.get_next_piece_box().check_for_click(piece_num)
+                break
+            
+        if (click_response[0] != Piece_Holder.NO_CLICK): #Piece was successfully dropped in square
+            break
+        else: #Bad drop, animate return of the piece
+            move_surface(piece_surf, pygame.mouse.get_pos(), interface_state.get_piece_holder().get_square_pos(piece_num), interface_state)
+            interface_state.get_piece_holder().piece_returned(piece_num)
+
+    move = GameMove()
+    move.set_move(square[0], square[1], piece_num)
+    return [move, GameStatus.PLAYING]
+
+def move_surface(surface, start, destination, interface_state):
+    current_pos = start
+    while ((abs(current_pos[0] - destination[0]) > 5) or (abs(current_pos[1] - destination[1]) > 5)):
+        new_x = (int((current_pos[0] - destination[0])/1.1) + destination[0])
+        new_y = (int((current_pos[1] - destination[1])/1.1) + destination[1])
+        current_pos = (new_x, new_y)
+        #simple exponential decay in the form of An=f(An-1)
+        interface_state.do_event_fetch()
+        MAIN_SURF.blit(surface, current_pos)
+        pygame.display.update()
+
+def signal_end_of_game(game_status, game_state, player_1,
+                       player_2, current_player):
+    player_1.game_over(game_state)
+    player_2.game_over(game_state)
+    if game_status == GameStatus.QUITTING: #Won't ever happen with an interface
+        print "Game over - player quitting."
+    elif game_status == GameStatus.TIE:
+        print "Game over - it's a tie."
+    elif game_status == GameStatus.WIN:
+        print "Game over - Player "+current_player.player_num+" wins!."
+    else:
+        print "Game over - unknown reason"

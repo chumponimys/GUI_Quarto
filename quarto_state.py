@@ -54,11 +54,12 @@ class GameState():
     UNAVAILABLE = 0
     EMPTY = -1
     
-    def __init__(self):
+    def __init__(self, interface_state):
         # arbitrarily pick piece 15 for first move, it doesn't matter which one is used
         self.available_pieces = [GameState.AVAILABLE]*15 + [GameState.UNAVAILABLE]
         self.squares = [GameState.EMPTY]*16
         self.current_piece = 15
+        self.interface_state = interface_state
     
     def reset(self):
         # arbitrarily pick piece 15 for first move, it doesn't matter which one is used
@@ -97,6 +98,9 @@ class GameState():
         new_piece = move.get_piece()
         self.set_current_piece(new_piece)
         self.available_pieces[new_piece] = GameState.UNAVAILABLE
+
+    def get_interface(self):
+        return self.interface_state
         
 def check_pieces_for_win(p1, p2, p3, p4):
     if (p1 < 0) or (p2 < 0) or (p3 < 0) or (p4 < 0):
@@ -146,7 +150,7 @@ def check_move(main_game_state, move):
     return [MoveStatus.LEGAL_MOVE, GameStatus.PLAYING]
 
 def copy_game_state(game_state):
-    new_game_state = GameState()
+    new_game_state = GameState(game_state.interface_state)
     new_game_state.set_current_piece(game_state.get_current_piece())
     piece_list = game_state.get_available_pieces()
     square_list = game_state.get_squares()

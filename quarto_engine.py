@@ -8,8 +8,8 @@ from quarto_network import *
 pygame.init()
 WHITE = (0, 0, 0)
 
-def quarto(player_1, player_2):
-    game_state = GameState()
+def quarto(player_1, player_2, interface_state):
+    game_state = GameState(interface_state)
     game_status = GameStatus.PLAYING
     toggle_player_turns = -1
     turn_player = player_1
@@ -33,16 +33,3 @@ def quarto(player_1, player_2):
                 signal_bad_move(move, move_check, turn_player) 
     final_move = turn_player
     return [game_state, game_status, final_move, player_1, player_2]
-
-while True: # main game loop
-    MAIN_SURF.fill(WHITE)
-    for event in pygame.event.get():
-        if(event.type == QUIT):
-            pygame.quit()
-            sys.exit()
-        elif (event.type == KEYDOWN):
-            print "YEPPP"
-            #Programmer laziness at its finest
-            if event.key == K_ESCAPE:
-                pygame.quit()
-                sys.exit()
