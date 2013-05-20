@@ -83,7 +83,6 @@ def get_computer_move(game_state, level):
             return [random.choice(good_moves), GameStatus.PLAYING]
     else:
         #No possible moves that won't let opponent win
-        notify("Well Done")
         return get_random_move(game_state)
     
     #depth = len(get_good_pieces_and_squares(game_state)[0])

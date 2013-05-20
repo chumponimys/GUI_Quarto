@@ -301,7 +301,7 @@ def get_players_information(interface_state):
     text_rect = text_surface.get_rect()
     text_rect.topleft = (350, 250)
     
-    while True:
+    while True: #Wait for "Go!" to be pressed
         events = interface_state.do_event_fetch()
         MAIN_SURF.fill(WHITE)
         player_radios[0].draw_surface()
@@ -322,11 +322,16 @@ def get_players_information(interface_state):
     return selected
 
 def display_game_state(game_state):
+    #Board, Piece Holder, and Next Piece Box act as an interface version of
+    #the GameState class, so since they keep track of everything we don't need
+    #To do much here
     interface_state = game_state.get_interface()
     interface_state.do_event_fetch()
     pygame.display.update()
 
 def make_move_and_display(game_state, move):
+    print game_state.get_available_pieces()
+    print game_state.get_squares()
     interface_state = game_state.interface_state
     board = interface_state.get_board()
     game_state.make_move(move)
@@ -334,17 +339,20 @@ def make_move_and_display(game_state, move):
     current_interface_piece = interface_state.get_next_piece_box().get_current_piece()
     if (new_piece != current_interface_piece[1]):
         #Check if interface has already made move (if it was a human move)
+        #Otherwise animate the move for user
+        #Animate piece to board
         interface_state.get_next_piece_box().clear_box()
         col = move.get_col_placement()
         row = move.get_row_placement()
         move_surface(current_interface_piece[0], (200, 250), board.get_square_coords(row, col), interface_state)
         board.set_square(row, col, current_interface_piece[1])
-        
-        holder_square = interface_state.get_piece_holder().get_square(new_piece)
-        new_current_piece = holder_square.click_action()
-        location = holder_square.get_pos()
-        move_surface(new_current_piece, location, (200, 250), interface_state)
-        interface_state.get_next_piece_box().on_mouse_drop(new_piece)
+        #Animate piece to next piece square
+        if (new_piece != -1):
+            holder_square = interface_state.get_piece_holder().get_square(new_piece)
+            new_current_piece = holder_square.click_action()
+            location = holder_square.get_pos()
+            move_surface(new_current_piece, location, (200, 250), interface_state)
+            interface_state.get_next_piece_box().on_mouse_drop(new_piece)
         
     display_game_state(game_state)
 
@@ -400,6 +408,7 @@ def get_human_move(game_state):
     return [move, GameStatus.PLAYING]
 
 def move_surface(surface, start, destination, interface_state):
+    #For animated movements
     current_pos = start
     while ((abs(current_pos[0] - destination[0]) > 5) or (abs(current_pos[1] - destination[1]) > 5)):
         new_x = (int((current_pos[0] - destination[0])/1.1) + destination[0])
@@ -412,13 +421,29 @@ def move_surface(surface, start, destination, interface_state):
 
 def signal_end_of_game(game_status, game_state, player_1,
                        player_2, current_player):
+    interface_state = game_state.interface_state
     player_1.game_over(game_state)
     player_2.game_over(game_state)
     if game_status == GameStatus.QUITTING: #Won't ever happen with an interface
-        print "Game over - player quitting."
+        game_text = "Game over - player quitting."
     elif game_status == GameStatus.TIE:
-        print "Game over - it's a tie."
+        game_text = "It's a tie."
     elif game_status == GameStatus.WIN:
-        print "Game over - Player "+current_player.player_num+" wins!."
+        game_text = "Player "+current_player.player_num+" wins!"
     else:
-        print "Game over - unknown reason"
+        game_text = "Game over - unknown reason"
+
+    my_font = pygame.font.Font('freesansbold.ttf', 52)
+    text_surface = my_font.render(game_text, True, BLACK, YELLOW)
+    button_surface = my_font.render("Play Again!", True, BLACK, YELLOW)
+    button_rect = button_surface.get_rect()
+    button_rect.topleft = (300, 520)
+
+    while True:
+        events = interface_state.do_event_fetch()
+        MAIN_SURF.blit(text_surface, (250, 20))
+        MAIN_SURF.blit(button_surface, (300, 520))
+        pygame.display.update()
+        if (events == MOUSEBUTTONDOWN):
+            if (button_rect.collidepoint(pygame.mouse.get_pos())):
+                break
