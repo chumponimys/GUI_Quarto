@@ -1,4 +1,4 @@
-# quarto game - game state classes
+# quarto_state.py
 # Sean Straw & Ari Cohen
 from quarto_interface import *  # maybe split Board into logical info and display info?
 

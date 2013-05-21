@@ -1,3 +1,6 @@
+# quarto_interface.py
+# Ari Cohen
+
 import pygame, sys
 from pygame.locals import *
 from buttons import *
@@ -330,8 +333,6 @@ def display_game_state(game_state):
     pygame.display.update()
 
 def make_move_and_display(game_state, move):
-    print game_state.get_available_pieces()
-    print game_state.get_squares()
     interface_state = game_state.interface_state
     board = interface_state.get_board()
     game_state.make_move(move)
@@ -409,6 +410,9 @@ def get_human_move(game_state):
 
 def move_surface(surface, start, destination, interface_state):
     #For animated movements
+    #1.1 is the optimal multiplying factor
+    #If animating from one corner of the screen to the other (1000 pixels)
+    #It will take about 46 frames, or approximately 1 second (since there is no fps clock)
     current_pos = start
     while ((abs(current_pos[0] - destination[0]) > 5) or (abs(current_pos[1] - destination[1]) > 5)):
         new_x = (int((current_pos[0] - destination[0])/1.1) + destination[0])

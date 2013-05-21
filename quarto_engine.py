@@ -1,12 +1,10 @@
+# quarto_engine.py
 # Sean Straw & Ari Cohen
 
 from quarto_interface import *
 from quarto_player import *
 from quarto_state import *
 from quarto_network import *
-
-pygame.init()
-WHITE = (0, 0, 0)
 
 def quarto(player_1, player_2, interface_state):
     game_state = GameState(interface_state)

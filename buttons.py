@@ -1,8 +1,6 @@
 import pygame, sys
 from pygame.locals import *
 
-#pygame.init()
-
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
@@ -169,36 +167,3 @@ class RadioButtonGroup():
         for button in range(self.total_buttons):
             if(self.buttons[button].get_if_checked()):
                 return button
-    
-
-###Create Checkboxes
-##check_boxes = []
-##colors = [BLACK, GREEN, BLUE, YELLOW, RED]
-##for x in range(6):
-##    check_boxes.append(CheckBox((50, 50 + (x * 75)), "Box "+str(x+1),
-##                                check=False, color=colors[x%5], text_size=32))
-##
-##radio_group = RadioButtonGroup((300, 50), 4, names=["Radio 1", "Radio 2", "Radio 3", "Radio 4"],
-##                           color=BLACK, text_size=32)
-##
-##while True: # main game loop
-##    MAIN_SURF.fill(WHITE)
-##    for event in pygame.event.get():
-##        if(event.type == QUIT):
-##            pygame.quit()
-##            sys.exit()
-##        elif (event.type == KEYDOWN):
-##            #Programmer laziness at its finest
-##            if event.key == K_ESCAPE:
-##                pygame.quit()
-##                sys.exit()
-##        elif (event.type == MOUSEBUTTONDOWN):
-##            radio_group.check_for_click()
-##            for box in check_boxes:
-##                box.check_for_click()
-##
-##    #redraw all surfaces and update display
-##    radio_group.draw_surface()
-##    for box in check_boxes:
-##        box.draw_surface()
-##    pygame.display.update()

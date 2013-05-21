@@ -1,4 +1,4 @@
-# quarto game - move generators and checkers
+# quarto_player.py
 # Sean Straw & Ari Cohen
 
 import random  # used for creating random moves
